@@ -46,8 +46,8 @@ src/
 │   ├── services/
 │   │   └── email/              # Contrato e implementação do serviço de e-mail
 │   ├── @types/
-│   │   ├── api/                # Tipos de resposta padrão (ApiResponse)
-│   │   ├── errors/             # AppError — classe base de erros tratados
+│   │   ├── api/                # ApiResponse, ApiError e ApiResponseFactory
+│   │   ├── errors/             # Erros HTTP tipados (InternalError, ValidationError, etc.)
 │   │   └── session/            # Extensões de tipo do Express Request
 │   ├── use-cases/              # Casos de uso por domínio (um subdiretório por recurso)
 │   └── utils/                  # Funções utilitárias gerais

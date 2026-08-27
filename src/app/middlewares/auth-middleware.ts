@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config";
-import { AppError } from "../@types/errors/app-error";
+import { UnauthorizedError } from "../@types/errors/unauthorized-error";
 
 export function authMiddleware(
   req: Request,
@@ -10,7 +10,7 @@ export function authMiddleware(
 ) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    throw new AppError("Token não informado", 401);
+    throw new UnauthorizedError("Token não informado");
   }
 
   const token = authHeader.split(" ")[1];
@@ -20,6 +20,6 @@ export function authMiddleware(
     (req as any).user = decoded;
     next();
   } catch {
-    throw new AppError("Token inválido ou expirado", 401);
+    throw new UnauthorizedError("Token inválido ou expirado");
   }
 }

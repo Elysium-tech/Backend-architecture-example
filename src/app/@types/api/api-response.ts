@@ -1,17 +1,17 @@
-export interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  message?: string;
+export interface ApiResponseSuccess<T> {
+  success: true;
+  status: number;
+  message: string;
+  body: T;
 }
 
-export function ok<T>(data: T): ApiResponse<T> {
-  return { success: true, data };
+export interface ApiResponseError<E = unknown> {
+  success: false;
+  status: number;
+  message: string;
+  error: E;
 }
 
-export function created<T>(data: T): ApiResponse<T> {
-  return { success: true, data };
-}
-
-export function noContent(): ApiResponse {
-  return { success: true };
-}
+export type ApiResponse<T, E = unknown> =
+  | ApiResponseSuccess<T>
+  | ApiResponseError<E>;
