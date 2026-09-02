@@ -4,6 +4,7 @@
     "module": "commonjs",
     "lib": ["ES2020"],
     "allowJs": true,
+    "rootDir": "./src",
     "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
