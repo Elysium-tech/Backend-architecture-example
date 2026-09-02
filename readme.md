@@ -129,6 +129,9 @@ npm run test:coverage        # Relatório de cobertura
 
 # Formatação
 npm run format               # Prettier em todo o projeto
+
+# Geração de use-cases
+npm run generate:use-case -- users create
 ```
 
 ---
