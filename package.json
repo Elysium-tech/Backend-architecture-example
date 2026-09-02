@@ -7,6 +7,7 @@
     "build": "npx tsc -b tsconfig.json",
     "dev": "tsx watch src/index.ts",
     "generate:use-case": "tsx src/scripts/generate-use-case.ts",
+    "audit:swagger": "tsx src/scripts/audit-swagger.ts",
     "db:migrate": "knex migrate:latest --knexfile knexfile.ts",
     "db:migrate:rollback": "knex migrate:rollback --knexfile knexfile.ts",
     "db:seed": "knex seed:run --knexfile knexfile.ts",

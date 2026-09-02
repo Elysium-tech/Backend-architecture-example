@@ -132,6 +132,9 @@ npm run format               # Prettier em todo o projeto
 
 # Geração de use-cases
 npm run generate:use-case -- users create
+
+# Auditoria da documentação OpenAPI
+npm run audit:swagger
 ```
 
 ---
