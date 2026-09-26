@@ -1,17 +1,29 @@
-// Arquivo de configuração do Swagger/OpenAPI
-// Registre aqui todos os schemas e paths da API
-
 import swaggerUi from "swagger-ui-express";
 import { Express } from "express";
+import { paths } from "./paths";
+import { apiErrorSchema, apiResponseSchema } from "./schemas";
 
 const swaggerDocument = {
   openapi: "3.0.0",
   info: {
     title: "Elysium Backend API",
     version: "1.0.0",
-    description: "Documentação da API do backend",
+    description: "Plataforma de comunicação Elysium (Chat, Voz, Perfil e Sessão)",
   },
-  paths: {},
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT",
+      },
+    },
+    schemas: {
+      ApiResponse: apiResponseSchema,
+      ApiError: apiErrorSchema,
+    },
+  },
+  paths,
 };
 
 export function setupSwagger(app: Express) {

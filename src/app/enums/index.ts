@@ -1,3 +1,6 @@
-// Enums globais da aplicação
-// Exemplo:
-// export enum UserRole { ADMIN = "admin", USER = "user" }
+export enum UserStatus {
+  ONLINE = "ONLINE",
+  OFFLINE = "OFFLINE",
+  IDLE = "IDLE",
+  DO_NOT_DISTURB = "DO_NOT_DISTURB",
+}

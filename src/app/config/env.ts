@@ -12,8 +12,6 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().default("http://localhost:5173"),
   BACKEND_URL: z.string().default("http://localhost:3000"),
   LOG_PRETTY: z.coerce.boolean().default(true),
-  RUN_MIGRATIONS_ON_STARTUP: z.coerce.boolean().default(false),
-  RUN_SEEDS_ON_STARTUP: z.coerce.boolean().default(false),
 });
 
 export const env = envSchema.parse(process.env);

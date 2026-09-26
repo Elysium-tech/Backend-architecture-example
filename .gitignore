@@ -3,3 +3,10 @@ dist/
 .env
 *.log
 coverage/
+
+# Prisma
+*.db
+*.db-journal
+
+# TypeScript
+*.tsbuildinfo
