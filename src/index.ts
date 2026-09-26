@@ -3,17 +3,22 @@ import express from "express";
 import { env } from "./app/config";
 import { logger } from "./shared/logger";
 import { errorMiddleware } from "./app/middlewares/error-middleware";
-// TODO: import das rotas aqui
-// import { authRoutes } from "./app/routes/auth.routes";
+import { authRoutes } from "./app/routes/auth.routes";
+import { profileRoutes } from "./app/routes/profile.routes";
+import { setupSwagger } from "./swagger/openapi/swagger";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Documentation
+setupSwagger(app);
+
 // Public routes
-// app.use("/auth", authRoutes);
+app.use("/auth", authRoutes);
 
 // Private routes
+app.use("/profile", profileRoutes);
 
 app.use(errorMiddleware);
 

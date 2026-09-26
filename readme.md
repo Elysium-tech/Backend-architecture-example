@@ -1,6 +1,6 @@
-# Elysium Backend
+# 🎮 Elysium Backend
 
-API REST do sistema Elysium, construída com **Node.js**, **TypeScript**, **Express** e **Knex** (PostgreSQL).
+API REST da plataforma de comunicação **Elysium** (estilo Discord — chat, voz, compartilhamento de tela), construída com **Node.js**, **TypeScript**, **Express 5** e **Prisma ORM** com **SQLite** (`dev.db`).
 
 ---
 
@@ -8,157 +8,140 @@ API REST do sistema Elysium, construída com **Node.js**, **TypeScript**, **Expr
 
 | Ferramenta | Uso |
 |---|---|
-| [Node.js](https://nodejs.org) | Runtime |
+| [Node.js](https://nodejs.org) | Runtime (v20+) |
 | [TypeScript](https://www.typescriptlang.org) | Tipagem estática |
 | [Express 5](https://expressjs.com) | Framework HTTP |
-| [Knex](https://knexjs.org) | Query builder / Migrations |
-| [PostgreSQL](https://www.postgresql.org) | Banco de dados |
-| [Zod](https://zod.dev) | Validação de schemas e env |
-| [Pino](https://getpino.io) | Logger estruturado |
+| [Prisma ORM](https://www.prisma.io) | ORM com type-safety e migrations |
+| [SQLite](https://www.sqlite.org) (`dev.db`) | Banco de dados local para desenvolvimento |
+| [Zod](https://zod.dev) | Validação de schemas e variáveis de ambiente |
+| [bcryptjs](https://github.com/dcodeIO/bcrypt.js) | Criptografia de senhas |
+| [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) | Autenticação baseada em JWT com controle de sessão |
+| [Pino](https://getpino.io) | Logger estruturado de alta performance |
 | [Vitest](https://vitest.dev) | Testes unitários e de integração |
-| [Swagger UI](https://swagger.io/tools/swagger-ui) | Documentação da API |
+| [Swagger UI](https://swagger.io/tools/swagger-ui) | Documentação interativa OpenAPI |
 
 ---
 
-## 📁 Estrutura de Pastas
+## 📁 Estrutura do Projeto
 
 ```
 src/
-├── index.ts                    # Entry point — inicializa servidor e middlewares
+├── index.ts                           # Entry point — inicializa Express, Swagger e rotas
 ├── app/
-│   ├── config/                 # Variáveis de ambiente validadas com Zod
-│   ├── cron/                   # Agendamento de tarefas (cron jobs)
+│   ├── config/                        # Variáveis de ambiente validadas com Zod
 │   ├── database/
-│   │   ├── connection.ts       # Instância do Knex
-│   │   ├── migrations/         # Arquivos de migration do banco
-│   │   └── seeds/              # Seeds de dados iniciais
-│   ├── enums/                  # Enums compartilhados da aplicação
+│   │   └── prisma.ts                  # Client singleton do Prisma
+│   ├── enums/                         # Enums da aplicação (UserStatus, etc.)
 │   ├── middlewares/
-│   │   ├── auth-middleware.ts  # Autenticação JWT
-│   │   └── error-middleware.ts # Tratamento global de erros
-│   ├── models/                 # Interfaces/tipos das entidades do banco
-│   ├── permissions/            # Regras de permissão por role
-│   ├── queue/
-│   │   ├── consumers/          # Consumidores de fila de mensagens
-│   │   ├── handlers/           # Handlers de processamento das mensagens
-│   │   └── producers/          # Produtores / publicadores de eventos
-│   ├── routes/                 # Definição das rotas por módulo
-│   ├── services/
-│   │   └── email/              # Contrato e implementação do serviço de e-mail
+│   │   ├── auth-middleware.ts         # Validação de JWT e verificação de Sessão ativa no SQLite
+│   │   └── error-middleware.ts        # Tratamento global de erros
+│   ├── models/                        # Interfaces e tipos derivados do Prisma
+│   ├── routes/
+│   │   ├── auth.routes.ts             # Rotas de cadastro, login, logout e me
+│   │   ├── profile.routes.ts          # Rotas de consulta e edição de perfil
+│   │   └── index.ts                   # Exportação unificada das rotas
 │   ├── @types/
-│   │   ├── api/                # ApiResponse, ApiError e ApiResponseFactory
-│   │   ├── errors/             # Erros HTTP tipados (InternalError, ValidationError, etc.)
-│   │   └── session/            # Extensões de tipo do Express Request
-│   ├── use-cases/              # Casos de uso por domínio (um subdiretório por recurso)
-│   └── utils/                  # Funções utilitárias gerais
-├── scripts/                    # Scripts utilitários de desenvolvimento
+│   │   ├── api/                       # ApiResponse, ApiError e ApiResponseFactory
+│   │   ├── errors/                    # Erros HTTP tipados (UnauthorizedError, ConflictError, etc.)
+│   │   └── session/                   # Extensão da interface Request do Express (req.user)
+│   └── use-cases/
+│       ├── auth/
+│       │   ├── register/              # Cadastro de novo usuário
+│       │   ├── login/                 # Autenticação e criação de sessão
+│       │   ├── logout/                # Encerramento e revogação de sessão
+│       │   └── me/                    # Dados do usuário logado
+│       └── profile/
+│           ├── get-profile/           # Obter perfil por ID ou username
+│           └── update-profile/        # Atualizar displayName, bio, avatar, status
 ├── shared/
-│   └── logger.ts               # Logger Pino compartilhado
-├── swagger/
-│   ├── modules/                # Schemas Swagger por módulo
-│   └── openapi/
-│       ├── helpers/            # Helpers de responses OpenAPI
-│       ├── paths/              # Paths registrados da API
-│       ├── schemas/            # Schemas globais reutilizáveis
-│       └── swagger.ts          # Setup do Swagger UI
-└── test/
-    ├── setup.ts                # Setup global do Vitest (beforeAll/afterAll)
-    ├── factories.ts            # Factories de dados para testes
-    └── helpers.ts              # Utilitários de teste
+│   └── logger.ts                      # Logger Pino compartilhado
+└── swagger/
+    └── openapi/                       # Especificação OpenAPI e Swagger UI em /api-docs
+
+prisma/
+└── schema.prisma                      # Schema de banco de dados SQLite (User, Session)
 ```
 
 ---
 
-## ⚙️ Configuração
+## 📦 Modelo de Dados (Prisma)
 
-### Pré-requisitos
+### `User`
+- `id`: String (UUID)
+- `email`: String (único)
+- `username`: String (único)
+- `displayName`: String
+- `passwordHash`: String (bcrypt)
+- `avatarUrl`: String? (opcional)
+- `bio`: String? (opcional)
+- `status`: String (`ONLINE`, `OFFLINE`, `IDLE`, `DO_NOT_DISTURB`)
+- `createdAt` / `updatedAt`: DateTime
+- `sessions`: Session[]
 
-- Node.js >= 20
-- PostgreSQL >= 14
-- npm
+### `Session`
+- `id`: String (UUID)
+- `userId`: String (FK -> User)
+- `token`: String (único)
+- `userAgent`: String?
+- `ipAddress`: String?
+- `expiresAt`: DateTime
+- `createdAt`: DateTime
 
-### Instalação
+---
+
+## 🔌 Endpoints da API
+
+### Autenticação (`/auth`)
+
+| Método | Rota | Autenticado | Descrição |
+|---|---|---|---|
+| `POST` | `/auth/register` | ❌ Não | Cria conta de usuário, inicializa sessão e devolve JWT |
+| `POST` | `/auth/login` | ❌ Não | Valida credenciais, gera sessão no banco e devolve JWT |
+| `POST` | `/auth/logout` | ✅ Sim | Revoga a sessão atual no banco e atualiza status para OFFLINE |
+| `GET` | `/auth/me` | ✅ Sim | Retorna os dados completos do usuário autenticado |
+
+### Perfil (`/profile`)
+
+| Método | Rota | Autenticado | Descrição |
+|---|---|---|---|
+| `GET` | `/profile/:id` | ✅ Sim | Consulta perfil público por ID ou username |
+| `PATCH` | `/profile/me` | ✅ Sim | Atualiza displayName, bio, avatarUrl e status |
+
+---
+
+## ⚙️ Inicialização do Projeto
+
+### 1. Instalar dependências
+
+No terminal da sua máquina:
 
 ```bash
-# 1. Clone o repositório
-git clone <url-do-repositorio>
-cd elysium-backend
-
-# 2. Instale as dependências
 npm install
-
-# 3. Configure as variáveis de ambiente
-cp .env.example .env
-# Edite o .env com suas configurações
 ```
 
-### Variáveis de Ambiente
-
-| Variável | Descrição | Padrão |
-|---|---|---|
-| `PORT` | Porta do servidor | `3000` |
-| `NODE_ENV` | Ambiente (`development` / `production`) | `development` |
-| `DATABASE_URL` | URL de conexão PostgreSQL | — |
-| `JWT_SECRET` | Segredo para assinar tokens JWT | — |
-| `SALT_ROUNDS` | Rounds de hash bcrypt | `10` |
-| `FRONTEND_URL` | URL do frontend (CORS) | `http://localhost:5173` |
-| `LOG_PRETTY` | Log formatado no terminal | `true` |
-| `RUN_MIGRATIONS_ON_STARTUP` | Roda migrations ao iniciar | `false` |
-| `RUN_SEEDS_ON_STARTUP` | Roda seeds ao iniciar | `false` |
-
----
-
-## 🛠️ Scripts
+### 2. Gerar o Prisma Client e sincronizar o banco SQLite
 
 ```bash
-# Desenvolvimento (hot reload)
+# Sincroniza o schema diretamente com o banco dev.db
+npm run db:push
+
+# Ou criar migration
+npm run db:migrate
+```
+
+### 3. Rodar a aplicação em modo desenvolvimento
+
+```bash
 npm run dev
-
-# Build para produção
-npm run build
-
-# Banco de dados
-npm run db:migrate           # Aplica migrations pendentes
-npm run db:migrate:rollback  # Desfaz a última migration
-npm run db:seed              # Executa os seeds
-
-# Testes
-npm run test                 # Executa todos os testes
-npm run test:watch           # Modo watch
-npm run test:coverage        # Relatório de cobertura
-
-# Formatação
-npm run format               # Prettier em todo o projeto
-
-# Geração de use-cases
-npm run generate:use-case -- users create
-
-# Auditoria da documentação OpenAPI
-npm run audit:swagger
 ```
+
+O servidor estará rodando em: `http://localhost:3000`
 
 ---
 
-## 📐 Padrão de Módulos (Use Cases)
+## 📖 Documentação Interativa (Swagger)
 
-Cada domínio da aplicação segue a seguinte estrutura dentro de `src/app/use-cases/`:
-
-```
-use-cases/
-└── <recurso>/
-    ├── <acao>-<recurso>.use-case.ts   # Lógica de negócio
-    ├── <recurso>.repository.ts         # Acesso ao banco via Knex
-    ├── <recurso>.dto.ts                # DTOs de entrada/saída
-    └── <recurso>.spec.ts               # Testes do use case
-```
-
-As rotas ficam em `src/app/routes/<recurso>.routes.ts` e importam diretamente os use cases.
-
----
-
-## 📖 Documentação da API
-
-Com o servidor rodando, acesse:
+Acesse no navegador com o servidor rodando:
 
 ```
 http://localhost:3000/api-docs
@@ -166,16 +149,21 @@ http://localhost:3000/api-docs
 
 ---
 
-## 🧪 Testes
+## 🛠️ Scripts Disponíveis
 
 ```bash
-npm run test:coverage
+# Desenvolvimento
+npm run dev              # Inicia servidor com tsx watch (hot reload)
+npm run build            # Compila TypeScript para ./dist
+
+# Banco de dados (Prisma + SQLite)
+npm run db:push          # Sincroniza schema.prisma com o arquivo dev.db
+npm run db:migrate       # Cria e aplica migrações do Prisma
+npm run db:studio        # Interface web do Prisma para visualizar dados
+npm run prisma:generate  # Regenera os tipos do Prisma Client
+
+# Testes e Qualidade
+npm run test             # Executa a suite de testes (Vitest)
+npm run test:coverage    # Executa testes com relatório de cobertura
+npm run format           # Formatação automática com Prettier
 ```
-
-A cobertura mínima configurada é **40%** para statements, branches, funções e linhas.
-
----
-
-## 📄 Licença
-
-ISC

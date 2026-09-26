@@ -39,12 +39,18 @@ function normalizePath(value: string): string {
     .replace(/\/$/, '') || '/';
 }
 
+function getRoutePrefix(filePath: string): string {
+  const base = path.basename(filePath).replace(/\.routes\.ts$/, '');
+  return base === 'index' || base === 'routes' ? '' : `/${base}`;
+}
+
 function collectEndpoints(): Endpoint[] {
   return getTypeScriptFiles(routesDirectory).flatMap((filePath) => {
     const source = fs.readFileSync(filePath, 'utf8');
+    const prefix = getRoutePrefix(filePath);
     return [...source.matchAll(endpointPattern)].map((match) => ({
       method: match[1].toUpperCase(),
-      path: normalizePath(match[2]),
+      path: normalizePath(`${prefix}${match[2]}`),
       source: path.relative(projectRoot, filePath),
     }));
   });
