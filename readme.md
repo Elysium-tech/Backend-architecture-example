@@ -139,6 +139,26 @@ O servidor estará rodando em: `http://localhost:3000`
 
 ---
 
+## 🐳 Subir o ambiente com Docker (atalho — SQLite)
+
+```bash
+# Sobe o backend (build + SQLite em volume persistente)
+docker compose up --build -d
+
+# Ver logs
+docker compose logs -f backend
+
+# Parar (mantém o banco no volume sqlite-data)
+docker compose down
+
+# Parar e apagar o banco
+docker compose down -v
+```
+
+O servidor estará rodando em: `http://localhost:3000`
+
+---
+
 ## 📖 Documentação Interativa (Swagger)
 
 Acesse no navegador com o servidor rodando:

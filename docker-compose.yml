@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: .
+    container_name: elysium-backend
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # SQLite em volume persistente. Sobrescreve o DATABASE_URL do .env (file:./dev.db)
+      # que apontaria para dentro do schema e se perderia a cada rebuild.
+      DATABASE_URL: file:/app/data/dev.db
+      LOG_PRETTY: "false"
+    volumes:
+      - sqlite-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  sqlite-data:
+    driver: local
