@@ -9,14 +9,19 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      # SQLite em volume persistente. Sobrescreve o DATABASE_URL do .env (file:./dev.db)
-      # que apontaria para dentro do schema e se perderia a cada rebuild.
-      DATABASE_URL: file:/app/data/dev.db
+      # DATABASE_URL via secrets (NÃO commitar .env com segredos).
+      # Opções suportadas pelo Compose:
+      #   a) Docker secrets (recomendado em swarm/prod):
+      #      secrets: [database_url]
+      #      environment: { DATABASE_URL_FILE: /run/secrets/database_url }
+      #   b) Variável já exportada no host / CI (remove do env_file):
+      #      DATABASE_URL: ${DATABASE_URL}
+      #   c) Dev local SQLite: DATABASE_URL: "file:./dev.db"
+      # Volume sqlite-data removido: persistência de SQLite via volume
+      # mascarava drift de schema e conflitava com `migrate deploy`.
+      # Se Silex migrar para Postgres, apontar DATABASE_URL p/ o serviço db.
       LOG_PRETTY: "false"
-    volumes:
-      - sqlite-data:/app/data
     restart: unless-stopped
 
-volumes:
-  sqlite-data:
-    driver: local
+# Nenhum volume nomeado. SQLite local não é persistido em prod;
+# usar banco gerenciado (responsabilidade do Silex via schema.prisma).

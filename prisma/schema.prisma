@@ -3,23 +3,28 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id           String     @id @default(uuid())
-  email        String     @unique
-  username     String     @unique
+  id           String   @id @default(uuid())
+  email        String   @unique
+  username     String   @unique
   displayName  String
   passwordHash String
   avatarUrl    String?
   bio          String?
-  status       String     @default("OFFLINE")
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  status       String   @default("OFFLINE")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  sessions Session[]
+  sessions           Session[]
+  ownedGuilds        Guild[]         @relation("GuildOwner")
+  channelMemberships ChannelMember[]
+  messages           Message[]
+  reactions          Reaction[]
 }
 
 model Session {
@@ -32,4 +37,98 @@ model Session {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Guild {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  iconUrl     String?
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner    User      @relation("GuildOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  channels Channel[]
+  invites  Invite[]
+
+  @@index([ownerId])
+}
+
+model Channel {
+  id        String   @id @default(uuid())
+  guildId   String
+  name      String
+  topic     String?
+  type      String   @default("TEXT")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  guild    Guild           @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  members  ChannelMember[]
+  messages Message[]
+
+  @@index([guildId])
+}
+
+model ChannelMember {
+  id        String   @id @default(uuid())
+  channelId String
+  userId    String
+  role      String   @default("MEMBER")
+  joinedAt  DateTime @default(now())
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id              String   @id @default(uuid())
+  channelId       String
+  authorId        String
+  clientMessageId String   @unique
+  content         String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  channel   Channel    @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  reactions Reaction[]
+
+  @@index([channelId, createdAt])
+}
+
+model Reaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+}
+
+model Invite {
+  id          String   @id @default(uuid())
+  token       String   @unique
+  guildId     String
+  createdById String
+  expiresAt   DateTime
+  maxUses     Int?
+  uses        Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  guild Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  @@index([guildId])
 }
