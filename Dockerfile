@@ -36,9 +36,9 @@ ENV NODE_ENV=production
 
 COPY --from=builder /app/dist ./dist
 
-# Diretório persistente do SQLite (DATABASE_URL=file:/app/data/dev.db)
-RUN mkdir -p /app/data
-
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma db push && node dist/index.js"]
+# Boot via migrations versionadas (Silex é dono de prisma/schema.prisma).
+# Requer `prisma/migrations/*` geradas via `prisma migrate dev`.
+# NÃO usar `db push` em produção: sem histórico/auditoria e com risco de drift.
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]

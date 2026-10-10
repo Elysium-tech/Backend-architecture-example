@@ -21,6 +21,9 @@ export async function authMiddleware(
     }
 
     const token = authHeader.split(" ")[1];
+    if (!token) {
+      throw new UnauthorizedError("Token não informado");
+    }
 
     const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
 
@@ -34,6 +37,17 @@ export async function authMiddleware(
       if (session) {
         await prisma.session.delete({ where: { id: session.id } });
       }
+      throw new UnauthorizedError("Sessão expirada ou inválida");
+    }
+
+    // Token binding: o JWT apresentado deve ser o mesmo gravado na sessão.
+    // Revogação via logout deleta a sessão; rotação futura invalida tokens antigos.
+    if (session.token !== token) {
+      throw new UnauthorizedError("Sessão expirada ou inválida");
+    }
+
+    // Subject binding: o sub do JWT deve pertencer ao dono da sessão.
+    if (session.userId !== decoded.sub) {
       throw new UnauthorizedError("Sessão expirada ou inválida");
     }
 
